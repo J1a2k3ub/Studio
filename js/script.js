@@ -6,28 +6,72 @@ document.addEventListener('DOMContentLoaded', () => {
   const cenikSection = document.getElementById('cenik-section');
   const navBackdrop = document.getElementById('navBackdrop');
 
+  const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
   const openMenu = () => {
+    if (!navLinks || !hamburger) return;
     if (!navLinks.classList.contains('active')) {
       navLinks.classList.add('active');
       hamburger.classList.add('active');
-      mainContent.classList.add('menu-open');
-      document.body.classList.add('menu-open');
+
+      // Desktop: posun obsahu + backdrop
+      if (!isMobile()) {
+        if (mainContent) mainContent.classList.add('menu-open');
+        document.body.classList.add('menu-open');
+        if (navBackdrop) {
+          navBackdrop.style.opacity = '1';
+          navBackdrop.style.visibility = 'visible';
+        }
+      }
     }
   };
+
   const closeMenu = () => {
+    if (!navLinks || !hamburger) return;
     navLinks.classList.remove('active');
     hamburger.classList.remove('active');
-    mainContent.classList.remove('menu-open');
-    document.body.classList.remove('menu-open');
+
+    if (!isMobile()) {
+      if (mainContent) mainContent.classList.remove('menu-open');
+      document.body.classList.remove('menu-open');
+      if (navBackdrop) {
+        navBackdrop.style.opacity = '0';
+        navBackdrop.style.visibility = 'hidden';
+      }
+    }
   };
-  const toggleMenu = () => navLinks.classList.contains('active') ? closeMenu() : openMenu();
 
-  if (hamburger && navLinks && mainContent) {
-    hamburger.addEventListener('click', toggleMenu);
-  }
+  const toggleMenu = () => (navLinks && navLinks.classList.contains('active')) ? closeMenu() : openMenu();
+
+  if (hamburger && navLinks) hamburger.addEventListener('click', toggleMenu);
   if (navBackdrop) navBackdrop.addEventListener('click', closeMenu);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
 
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !isMobile()) closeMenu();
+  });
+
+  // Resize – udrží konzistentní stavy
+  window.addEventListener('resize', () => {
+    if (isMobile()) {
+      document.body.classList.remove('menu-open');
+      if (mainContent) mainContent.classList.remove('menu-open');
+      if (navBackdrop) {
+        navBackdrop.style.opacity = '0';
+        navBackdrop.style.visibility = 'hidden';
+      }
+    } else {
+      if (navLinks && navLinks.classList.contains('active')) {
+        document.body.classList.add('menu-open');
+        if (mainContent) mainContent.classList.add('menu-open');
+        if (navBackdrop) {
+          navBackdrop.style.opacity = '1';
+          navBackdrop.style.visibility = 'visible';
+        }
+      }
+    }
+  });
+
+  // Ceník toggle
   if (showCenikBtn && cenikSection) {
     showCenikBtn.addEventListener('click', () => {
       const isActive = cenikSection.classList.toggle('active');
@@ -40,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Fade-in observer
   const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
   const observer = new IntersectionObserver((entries, obs) => {
     entries.forEach(entry => {
@@ -51,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }, observerOptions);
   document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
+  // Drag gallery
   window.initGallery = function(galleryId) {
     const gallery = document.getElementById(galleryId);
     if (!gallery) return;
